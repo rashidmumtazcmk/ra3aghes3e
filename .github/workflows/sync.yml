@@ -1,0 +1,29 @@
+name: sync
+on:
+  schedule:
+    - cron: '30 21 * * *'
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Job id (empty = scheduled run)'
+        required: false
+        default: ''
+concurrency:
+  group: sync-${{ github.event.inputs.job || 'scheduled' }}
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node run.mjs
+        env:
+          SYNC_URL: ${{ secrets.SYNC_URL }}
+          SYNC_KEY: ${{ secrets.SYNC_KEY }}
+          JOB_ID: ${{ github.event.inputs.job }}
+          LIMIT: '700'
+          PAUSE_MS: '3000'
